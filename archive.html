@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Archive — Office Taxi Tracker</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+<body>
+  <div class="app-shell" style="flex-direction:column;width:100%;">
+    <div class="topbar" id="topbar"></div>
+
+    <div class="main">
+      <div class="page-head">
+        <div>
+          <h1>Archive</h1>
+          <p>Browse past journeys by calendar date or as a sorted list.</p>
+        </div>
+        <div class="sort-tabs">
+          <button data-view="list" class="active">List</button>
+          <button data-view="calendar">Calendar</button>
+        </div>
+      </div>
+
+      <div id="listView">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+          <div class="sort-tabs">
+            <button data-sort="recent" class="active">Recent → Past</button>
+            <button data-sort="oldest">Past → Recent</button>
+          </div>
+        </div>
+        <div class="board">
+          <div class="board-row-head">
+            <span></span>
+            <span>Booked for / Route</span>
+            <span>Reg. no. / Driver</span>
+            <span>Date</span>
+            <span>Start / Return</span>
+            <span>Distance</span>
+            <span>Pool</span>
+          </div>
+          <div id="listBody"></div>
+        </div>
+        <div id="listEmpty" class="empty-state" style="display:none;">
+          <div class="display">No past journeys yet</div>
+          <div>Completed journeys will appear here.</div>
+        </div>
+      </div>
+
+      <div id="calendarView" style="display:none;">
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+            <button class="btn btn-sm" id="prevMonth">&larr;</button>
+            <h3 id="monthLabel"></h3>
+            <button class="btn btn-sm" id="nextMonth">&rarr;</button>
+          </div>
+          <div class="calendar" id="calendarGrid"></div>
+        </div>
+        <div id="calendarDayResults" style="margin-top:18px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- reuse the same detail modal structure as the dashboard -->
+  <div class="modal-backdrop" id="detailModal" style="display:none;">
+    <div class="modal" style="max-width:760px;">
+      <div class="modal-head">
+        <h3 id="d_title">Journey</h3>
+        <button class="btn btn-ghost btn-icon" data-close>&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="detailMap" class="map-box" style="margin-bottom:16px;"></div>
+        <div class="grid-2">
+          <div><div class="hint">Taxi reg.</div><div class="reg" id="d_reg"></div></div>
+          <div><div class="hint">Driver</div><div id="d_driver"></div></div>
+          <div><div class="hint">Start time</div><div id="d_start"></div></div>
+          <div><div class="hint">Return time</div><div id="d_return"></div></div>
+          <div><div class="hint">Distance</div><div id="d_dist"></div></div>
+          <div><div class="hint">Status</div><div id="d_eta"></div></div>
+        </div>
+        <hr style="border-color:var(--border);margin:16px 0;">
+        <h3 style="font-size:14px;margin-bottom:10px;">Travelled with</h3>
+        <div id="d_participants" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;"></div>
+        <h3 style="font-size:14px;margin-bottom:10px;">Geo-tagged destination photos</h3>
+        <div class="photo-grid" id="d_photos"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/supabase-client-v2.js"></script>
+  <script src="js/layout.js"></script>
+  <script src="js/map-utils.js"></script>
+  <script src="js/archive.js"></script>
+</body>
+</html>

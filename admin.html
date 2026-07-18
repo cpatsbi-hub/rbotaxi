@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Office Taxi Tracker</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+<body>
+  <div class="app-shell" style="flex-direction:column;width:100%;">
+    <div class="topbar" id="topbar"></div>
+
+    <div class="main">
+      <div class="page-head">
+        <div>
+          <h1>Admin console</h1>
+          <p>Monitor every journey and review geo-tagged destination photos.</p>
+        </div>
+        <div class="sort-tabs">
+          <button data-tab="journeys" class="active">All journeys</button>
+          <button data-tab="photos">Photo review</button>
+          <button data-tab="users">Users</button>
+        </div>
+      </div>
+
+      <div id="notAdmin" style="display:none;" class="empty-state">
+        <div class="display">Admin access only</div>
+        <div>Your account doesn't have admin rights on this app.</div>
+      </div>
+
+      <div id="adminContent" style="display:none;">
+        <div id="tab_journeys">
+          <div class="board">
+            <div class="board-row-head">
+              <span></span><span>Booked for / Route</span><span>Reg. no. / Driver</span><span>Date</span><span>Start / Return</span><span>Status</span><span>Pool</span>
+            </div>
+            <div id="adminJourneyBody"></div>
+          </div>
+        </div>
+
+        <div id="tab_photos" style="display:none;">
+          <div class="card">
+            <div class="field" style="max-width:340px;">
+              <label>Filter by journey</label>
+              <select id="photoJourneyFilter"><option value="">All journeys</option></select>
+            </div>
+            <div class="photo-grid" id="adminPhotoGrid" style="margin-top:14px;"></div>
+          </div>
+        </div>
+
+        <div id="tab_users" style="display:none;">
+          <div class="board">
+            <div class="board-row-head" style="grid-template-columns:2fr 2fr 1fr;">
+              <span>Name</span><span>Email</span><span>Role</span>
+            </div>
+            <div id="userBody"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="photoModal" style="display:none;">
+    <div class="modal" style="max-width:560px;">
+      <div class="modal-head"><h3>Photo detail</h3><button class="btn btn-ghost btn-icon" data-close>&times;</button></div>
+      <div class="modal-body">
+        <img id="photoModalImg" style="width:100%;border-radius:8px;border:1px solid var(--border);margin-bottom:14px;">
+        <div id="photoModalMeta" class="hint"></div>
+        <div id="photoModalMap" class="map-box" style="height:220px;margin-top:12px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/supabase-client-v2.js"></script>
+  <script src="js/layout.js"></script>
+  <script src="js/map-utils.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

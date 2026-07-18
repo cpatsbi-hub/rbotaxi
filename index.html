@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Office Taxi Tracker</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+<body>
+  <div class="app-shell" style="flex-direction:column;width:100%;">
+    <div class="topbar" id="topbar"></div>
+
+    <div class="main">
+      <div class="page-head">
+        <div>
+          <h1>Journey board</h1>
+          <p>Live and upcoming taxi movement across the office.</p>
+        </div>
+        <button class="btn btn-primary" id="newJourneyBtn">+ New journey</button>
+      </div>
+
+      <div class="stat-row" id="statRow"></div>
+
+      <div class="board">
+        <div class="board-row-head">
+          <span></span>
+          <span>Booked for / Route</span>
+          <span>Reg. no. / Driver</span>
+          <span>Date</span>
+          <span>Start / Return</span>
+          <span>ETA</span>
+          <span>Pool</span>
+        </div>
+        <div id="boardBody"></div>
+      </div>
+      <div id="emptyState" class="empty-state" style="display:none;">
+        <div class="display">No journeys booked yet</div>
+        <div>Start the first one with "+ New journey" above.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- New journey modal -->
+  <div class="modal-backdrop" id="newJourneyModal" style="display:none;">
+    <div class="modal">
+      <div class="modal-head">
+        <h3>Book a taxi journey</h3>
+        <button class="btn btn-ghost btn-icon" data-close>&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="field"><label>Booked for (person name)</label><input id="f_person"></div>
+        <div class="grid-2">
+          <div class="field autocomplete-wrap">
+            <label>Origin</label>
+            <input id="f_origin" placeholder="Search a place...">
+            <div class="autocomplete-list" id="l_origin" style="display:none;"></div>
+          </div>
+          <div class="field autocomplete-wrap">
+            <label>Destination</label>
+            <input id="f_dest" placeholder="Search a place...">
+            <div class="autocomplete-list" id="l_dest" style="display:none;"></div>
+          </div>
+        </div>
+        <div class="field autocomplete-wrap">
+          <label>Via (optional stop)</label>
+          <input id="f_via" placeholder="Search a place...">
+          <div class="autocomplete-list" id="l_via" style="display:none;"></div>
+          <div id="viaChips" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;"></div>
+        </div>
+        <div class="grid-2">
+          <div class="field"><label>Journey date</label><input type="date" id="f_date"></div>
+          <div class="field"><label>Taxi reg. number</label><input id="f_reg" placeholder="e.g. KL-07-AB-1234"></div>
+        </div>
+        <div class="grid-2">
+          <div class="field"><label>Start time (mandatory)</label><input type="time" id="f_start"></div>
+          <div class="field"><label>Return time (mandatory)</label><input type="time" id="f_return"></div>
+        </div>
+        <div class="field"><label>Driver name</label><input id="f_driver"></div>
+        <div id="routePreview" class="map-box" style="height:220px;margin-bottom:14px;"></div>
+        <div class="hint" id="routeInfo" style="margin-bottom:14px;"></div>
+        <button class="btn btn-primary" style="width:100%;justify-content:center;" id="saveJourneyBtn">Book journey</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Journey detail modal -->
+  <div class="modal-backdrop" id="detailModal" style="display:none;">
+    <div class="modal" style="max-width:760px;">
+      <div class="modal-head">
+        <h3 id="d_title">Journey</h3>
+        <button class="btn btn-ghost btn-icon" data-close>&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="detailMap" class="map-box" style="margin-bottom:16px;"></div>
+        <div class="grid-2">
+          <div><div class="hint">Taxi reg.</div><div class="reg" id="d_reg"></div></div>
+          <div><div class="hint">Driver</div><div id="d_driver"></div></div>
+          <div><div class="hint">Start time</div><div id="d_start"></div></div>
+          <div><div class="hint">Return time</div><div id="d_return"></div></div>
+          <div><div class="hint">Distance</div><div id="d_dist"></div></div>
+          <div><div class="hint">ETA</div><div id="d_eta"></div></div>
+        </div>
+        <hr style="border-color:var(--border);margin:16px 0;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <h3 style="font-size:14px;">Car-pooling with</h3>
+          <button class="btn btn-sm" id="joinBtn">+ Join this journey</button>
+        </div>
+        <div id="d_participants" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;"></div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <h3 style="font-size:14px;">Geo-tagged destination photos</h3>
+          <label class="btn btn-sm" style="cursor:pointer;">
+            Upload photo<input type="file" accept="image/*" id="photoInput" style="display:none;">
+          </label>
+        </div>
+        <div class="photo-grid" id="d_photos"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/supabase-client-v2.js"></script>
+  <script src="js/layout.js"></script>
+  <script src="js/map-utils.js"></script>
+  <script src="js/dashboard.js"></script>
+</body>
+</html>

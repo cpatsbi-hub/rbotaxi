@@ -70,15 +70,16 @@
           <div class="autocomplete-list" id="l_via" style="display:none;"></div>
           <div id="viaChips" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;"></div>
         </div>
-        <div class="grid-2">
-          <div class="field"><label>Journey date</label><input type="date" id="f_date"></div>
-          <div class="field"><label>Taxi reg. number</label><input id="f_reg" placeholder="e.g. KL-07-AB-1234"></div>
+        <div class="field">
+          <label>Vehicle</label>
+          <select id="f_taxi"><option value="">Select a taxi...</option></select>
+          <div class="hint" id="taxiEmptyHint" style="display:none;">No vehicles in the fleet yet — ask an admin to add one first.</div>
         </div>
+        <div class="field"><label>Journey date</label><input type="date" id="f_date"></div>
         <div class="grid-2">
           <div class="field"><label>Start time (mandatory)</label><input type="time" id="f_start"></div>
           <div class="field"><label>Return time (mandatory)</label><input type="time" id="f_return"></div>
         </div>
-        <div class="field"><label>Driver name</label><input id="f_driver"></div>
         <div id="routePreview" class="map-box" style="height:220px;margin-bottom:14px;"></div>
         <div class="hint" id="routeInfo" style="margin-bottom:14px;"></div>
         <button class="btn btn-primary" style="width:100%;justify-content:center;" id="saveJourneyBtn">Book journey</button>
@@ -113,7 +114,7 @@
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
           <h3 style="font-size:14px;">Geo-tagged destination photos</h3>
           <label class="btn btn-sm" style="cursor:pointer;">
-            Upload photo<input type="file" accept="image/*" id="photoInput" style="display:none;">
+            Upload photo<input type="file" accept="image/*" multiple id="photoInput" style="display:none;">
           </label>
         </div>
         <div class="photo-grid" id="d_photos"></div>

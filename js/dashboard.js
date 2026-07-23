@@ -5,6 +5,8 @@ let ORIGIN_PLACE = null, DEST_PLACE = null;
 let ROUTE_RESULT = null;
 let PREVIEW_MAP = null, PREVIEW_LAYER = null;
 let ALL_JOURNEYS = [];
+let ALL_TAXIS = [];
+let SELECTED_TAXI = null;
 
 (async function init() {
   const session = await requireAuth();
@@ -114,14 +116,19 @@ async function joinJourney(journeyId) {
 // ---------------- New journey modal ----------------
 function wireNewJourneyModal() {
   const modal = document.getElementById("newJourneyModal");
-  document.getElementById("newJourneyBtn").addEventListener("click", () => {
+  document.getElementById("newJourneyBtn").addEventListener("click", async () => {
     resetJourneyForm();
     modal.style.display = "flex";
+    await loadTaxisIntoDropdown();
     setTimeout(() => {
       if (!PREVIEW_MAP) PREVIEW_MAP = createMap("routePreview", [20.5937, 78.9629], 4);
     }, 50);
   });
   modal.querySelectorAll("[data-close]").forEach(b => b.addEventListener("click", () => modal.style.display = "none"));
+
+  document.getElementById("f_taxi").addEventListener("change", (e) => {
+    SELECTED_TAXI = ALL_TAXIS.find(t => t.id === e.target.value) || null;
+  });
 
   attachPlaceAutocomplete(document.getElementById("f_origin"), document.getElementById("l_origin"), (p) => {
     ORIGIN_PLACE = p; refreshRoutePreview();
@@ -140,11 +147,29 @@ function wireNewJourneyModal() {
 }
 
 function resetJourneyForm() {
-  ["f_person", "f_origin", "f_dest", "f_via", "f_reg", "f_driver", "f_date", "f_start", "f_return"].forEach(id => document.getElementById(id).value = "");
+  ["f_person", "f_origin", "f_dest", "f_via", "f_date", "f_start", "f_return"].forEach(id => document.getElementById(id).value = "");
+  document.getElementById("f_taxi").value = "";
+  SELECTED_TAXI = null;
   VIA_POINTS = []; ORIGIN_PLACE = null; DEST_PLACE = null; ROUTE_RESULT = null;
   renderViaChips();
   document.getElementById("routeInfo").textContent = "";
   if (PREVIEW_LAYER) { PREVIEW_LAYER.clearLayers(); }
+}
+
+async function loadTaxisIntoDropdown() {
+  const select = document.getElementById("f_taxi");
+  const emptyHint = document.getElementById("taxiEmptyHint");
+  const { data, error } = await sb.from("taxis").select("*").eq("is_active", true).order("reg_number");
+  if (error) { showToast("Could not load the vehicle list", "error"); return; }
+  ALL_TAXIS = data || [];
+  if (!ALL_TAXIS.length) {
+    emptyHint.style.display = "block";
+    select.innerHTML = `<option value="">No vehicles available</option>`;
+    return;
+  }
+  emptyHint.style.display = "none";
+  select.innerHTML = `<option value="">Select a taxi...</option>` +
+    ALL_TAXIS.map(t => `<option value="${t.id}">${escapeHtml(t.reg_number)} — ${escapeHtml(t.driver_name)}${t.vehicle_model ? " (" + escapeHtml(t.vehicle_model) + ")" : ""}</option>`).join("");
 }
 
 function renderViaChips() {
@@ -183,13 +208,11 @@ async function refreshRoutePreview() {
 async function saveJourney() {
   const person = document.getElementById("f_person").value.trim();
   const date = document.getElementById("f_date").value;
-  const reg = document.getElementById("f_reg").value.trim();
-  const driver = document.getElementById("f_driver").value.trim();
   const startT = document.getElementById("f_start").value;
   const returnT = document.getElementById("f_return").value;
 
-  if (!person || !ORIGIN_PLACE || !DEST_PLACE || !date || !reg || !driver || !startT || !returnT) {
-    showToast("Please fill in every field — start and return time are mandatory.", "error");
+  if (!person || !ORIGIN_PLACE || !DEST_PLACE || !date || !SELECTED_TAXI || !startT || !returnT) {
+    showToast("Please fill in every field — a vehicle, start time and return time are mandatory.", "error");
     return;
   }
 
@@ -205,8 +228,9 @@ async function saveJourney() {
     journey_date: date,
     start_time: `${date}T${startT}:00`,
     return_time: `${date}T${returnT}:00`,
-    taxi_reg_number: reg,
-    driver_name: driver,
+    taxi_id: SELECTED_TAXI.id,
+    taxi_reg_number: SELECTED_TAXI.reg_number,
+    driver_name: SELECTED_TAXI.driver_name,
     status: "upcoming"
   };
 
@@ -253,7 +277,7 @@ async function openDetail(journeyId) {
   }, 50);
 
   await loadPhotos(j.id);
-  document.getElementById("photoInput").onchange = (e) => uploadPhoto(j.id, e.target.files[0]);
+  document.getElementById("photoInput").onchange = (e) => uploadPhotos(j.id, [...e.target.files]);
 }
 
 async function loadPhotos(journeyId) {
@@ -269,9 +293,12 @@ async function loadPhotos(journeyId) {
   }).join("");
 }
 
-async function uploadPhoto(journeyId, file) {
-  if (!file) return;
-  showToast("Getting your location and uploading...");
+async function uploadPhotos(journeyId, files) {
+  if (!files || !files.length) return;
+  showToast(files.length > 1 ? `Getting your location and uploading ${files.length} photos...` : "Getting your location and uploading...");
+
+  // Capture location once and reuse for the whole batch — they were all
+  // taken at essentially the same place/moment when uploaded together.
   let lat = null, lng = null;
   try {
     const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, { timeout: 8000 }));
@@ -280,15 +307,19 @@ async function uploadPhoto(journeyId, file) {
     console.warn("Geolocation unavailable, uploading without coordinates.");
   }
 
-  const path = `${journeyId}/${CURRENT_USER.id}/${Date.now()}-${file.name}`;
-  const { error: upErr } = await sb.storage.from(PHOTO_BUCKET).upload(path, file, { upsert: false });
-  if (upErr) { showToast(upErr.message, "error"); return; }
+  let successCount = 0;
+  for (const file of files) {
+    const path = `${journeyId}/${CURRENT_USER.id}/${Date.now()}-${Math.random().toString(36).slice(2, 7)}-${file.name}`;
+    const { error: upErr } = await sb.storage.from(PHOTO_BUCKET).upload(path, file, { upsert: false });
+    if (upErr) { showToast(`${file.name}: ${upErr.message}`, "error"); continue; }
 
-  const { error: dbErr } = await sb.from("journey_photos").insert({
-    journey_id: journeyId, user_id: CURRENT_USER.id, storage_path: path, lat, lng
-  });
-  if (dbErr) { showToast(dbErr.message, "error"); return; }
+    const { error: dbErr } = await sb.from("journey_photos").insert({
+      journey_id: journeyId, user_id: CURRENT_USER.id, storage_path: path, lat, lng
+    });
+    if (dbErr) { showToast(`${file.name}: ${dbErr.message}`, "error"); continue; }
+    successCount++;
+  }
 
-  showToast("Photo uploaded", "success");
+  showToast(successCount === files.length ? `${successCount} photo${successCount > 1 ? "s" : ""} uploaded` : `${successCount} of ${files.length} photos uploaded`, "success");
   await loadPhotos(journeyId);
 }

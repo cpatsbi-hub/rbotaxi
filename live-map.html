@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Live Fleet — Office Taxi Tracker</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+<body>
+  <div class="app-shell" style="flex-direction:column;width:100%;">
+    <div class="topbar" id="topbar"></div>
+
+    <div class="main">
+      <div class="page-head">
+        <div>
+          <h1>Live Fleet</h1>
+          <p>Real-time position of vehicles fitted with a GPS tracker.</p>
+        </div>
+        <div class="hint" id="lastUpdated"></div>
+      </div>
+
+      <div id="mapWrap">
+        <div id="fleetMap" class="map-box" style="height:520px;margin-bottom:18px;"></div>
+      </div>
+
+      <div class="board">
+        <div class="board-row-head" style="grid-template-columns:14px 1.2fr 1fr .8fr .8fr 1.2fr;">
+          <span></span><span>Vehicle</span><span>Speed</span><span>Ignition</span><span>Battery</span><span>Last update</span>
+        </div>
+        <div id="fleetBody"></div>
+      </div>
+
+      <div id="emptyState" class="empty-state" style="display:none;">
+        <div class="display">No tracked vehicles yet</div>
+        <div>Add a GPS IMEI to a vehicle in Admin → Vehicles to see it here.</div>
+      </div>
+      <div id="noProxyState" class="empty-state" style="display:none;">
+        <div class="display">Live tracking isn't configured yet</div>
+        <div>An admin needs to set the proxy URL in <code>js/live-map.js</code>.</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/supabase-client-v2.js"></script>
+  <script src="js/layout.js"></script>
+  <script src="js/map-utils.js"></script>
+  <script src="js/live-map.js"></script>
+</body>
+</html>

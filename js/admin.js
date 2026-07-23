@@ -23,12 +23,14 @@ function wireTabs() {
     btn.addEventListener("click", () => {
       document.querySelectorAll(".sort-tabs button[data-tab]").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
-      ["journeys", "photos", "users"].forEach(t => {
+      ["journeys", "photos", "vehicles", "users"].forEach(t => {
         document.getElementById("tab_" + t).style.display = (t === btn.dataset.tab) ? "block" : "none";
       });
       if (btn.dataset.tab === "photos") loadAllPhotos();
+      if (btn.dataset.tab === "vehicles") loadTaxis();
     });
   });
+  document.getElementById("addTaxiBtn").addEventListener("click", addTaxi);
 }
 
 async function loadAdminJourneys() {
@@ -106,6 +108,72 @@ function openPhotoModal(photo, url) {
       L.marker([photo.lat, photo.lng]).addTo(PHOTO_MODAL_MAP);
     }, 50);
   }
+}
+
+async function loadTaxis() {
+  const body = document.getElementById("taxiBody");
+  body.innerHTML = `<div class="hint" style="padding:14px;">Loading fleet…</div>`;
+  const { data, error } = await sb.from("taxis").select("*").order("reg_number");
+  if (error) { body.innerHTML = `<div class="hint" style="padding:14px;">${error.message}</div>`; return; }
+
+  if (!data.length) {
+    body.innerHTML = `<div class="hint" style="padding:14px;">No vehicles added yet — use the form above.</div>`;
+    return;
+  }
+
+  body.innerHTML = data.map(t => `
+    <div class="board-row" style="grid-template-columns:1.2fr 1.2fr 1.2fr 1.3fr 1fr 1fr;">
+      <div class="reg">${escapeHtml(t.reg_number)}</div>
+      <div>${escapeHtml(t.driver_name)}</div>
+      <div class="hint">${escapeHtml(t.vehicle_model || "—")}</div>
+      <div class="mono hint">${escapeHtml(t.gps_imei || "—")}</div>
+      <div><span class="badge ${t.is_active ? "live" : "cancelled"}">${t.is_active ? "Active" : "Inactive"}</span></div>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-sm" data-toggle="${t.id}" data-active="${t.is_active}">${t.is_active ? "Deactivate" : "Activate"}</button>
+        <button class="btn btn-sm btn-danger" data-delete="${t.id}">Delete</button>
+      </div>
+    </div>`).join("");
+
+  body.querySelectorAll("[data-toggle]").forEach(btn => {
+    btn.addEventListener("click", () => toggleTaxi(btn.dataset.toggle, btn.dataset.active === "true"));
+  });
+  body.querySelectorAll("[data-delete]").forEach(btn => {
+    btn.addEventListener("click", () => deleteTaxi(btn.dataset.delete));
+  });
+}
+
+async function addTaxi() {
+  const reg = document.getElementById("v_reg").value.trim();
+  const driver = document.getElementById("v_driver").value.trim();
+  const model = document.getElementById("v_model").value.trim();
+  const imei = document.getElementById("v_imei").value.trim();
+  if (!reg || !driver) { showToast("Reg. number and driver name are required.", "error"); return; }
+
+  const { error } = await sb.from("taxis").insert({
+    reg_number: reg, driver_name: driver, vehicle_model: model || null, gps_imei: imei || null
+  });
+  if (error) { showToast(error.message, "error"); return; }
+
+  showToast("Vehicle added", "success");
+  document.getElementById("v_reg").value = "";
+  document.getElementById("v_driver").value = "";
+  document.getElementById("v_model").value = "";
+  document.getElementById("v_imei").value = "";
+  await loadTaxis();
+}
+
+async function toggleTaxi(id, currentlyActive) {
+  const { error } = await sb.from("taxis").update({ is_active: !currentlyActive }).eq("id", id);
+  if (error) { showToast(error.message, "error"); return; }
+  await loadTaxis();
+}
+
+async function deleteTaxi(id) {
+  if (!confirm("Remove this vehicle from the fleet? Past journeys that used it are not affected.")) return;
+  const { error } = await sb.from("taxis").delete().eq("id", id);
+  if (error) { showToast(error.message, "error"); return; }
+  showToast("Vehicle removed", "success");
+  await loadTaxis();
 }
 
 async function loadUsers() {

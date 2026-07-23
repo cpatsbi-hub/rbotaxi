@@ -5,6 +5,7 @@ async function renderTopbar(session, activePage) {
   const links = [
     ["index.html", "Dashboard"],
     ["archive.html", "Archive"],
+    ["live-map.html", "Live Fleet"],
   ];
   if (profile && profile.is_admin) links.push(["admin.html", "Admin"]);
 

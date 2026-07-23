@@ -22,6 +22,7 @@
         <div class="sort-tabs">
           <button data-tab="journeys" class="active">All journeys</button>
           <button data-tab="photos">Photo review</button>
+          <button data-tab="vehicles">Vehicles</button>
           <button data-tab="users">Users</button>
         </div>
       </div>
@@ -48,6 +49,29 @@
               <select id="photoJourneyFilter"><option value="">All journeys</option></select>
             </div>
             <div class="photo-grid" id="adminPhotoGrid" style="margin-top:14px;"></div>
+          </div>
+        </div>
+
+        <div id="tab_vehicles" style="display:none;">
+          <div class="card" style="margin-bottom:18px;">
+            <h3 style="font-size:14px;margin-bottom:14px;">Add a vehicle</h3>
+            <div class="grid-2">
+              <div class="field"><label>Reg. number</label><input id="v_reg" placeholder="e.g. KL-07-AB-1234"></div>
+              <div class="field"><label>Driver name</label><input id="v_driver"></div>
+            </div>
+            <div class="field"><label>Vehicle model (optional)</label><input id="v_model" placeholder="e.g. Toyota Etios"></div>
+            <div class="field">
+              <label>Hashtrace GPS IMEI (optional)</label>
+              <input id="v_imei" placeholder="e.g. 865006046312303">
+              <div class="hint">Links this vehicle to its live GPS tracker for the Live Fleet map. Find this in your Hashtrace dashboard or on the device itself.</div>
+            </div>
+            <button class="btn btn-primary" id="addTaxiBtn">+ Add vehicle</button>
+          </div>
+          <div class="board">
+            <div class="board-row-head" style="grid-template-columns:1.2fr 1.2fr 1.2fr 1.3fr 1fr 1fr;">
+              <span>Reg. number</span><span>Driver</span><span>Model</span><span>GPS IMEI</span><span>Status</span><span>Actions</span>
+            </div>
+            <div id="taxiBody"></div>
           </div>
         </div>
 
